@@ -1,23 +1,15 @@
-# Use the official Node.js image as a parent image
-FROM node:latest
-
-# Set the working directory inside the container
+# Stage 1
+FROM node:latest as node
 WORKDIR /app
-
-# Copy package.json and package-lock.json to install dependencies
+# Copy the package.json and package-lock.json files
 COPY package*.json ./
-
-# Install project dependencies
+RUN npm cache clean --force
 RUN npm install
-
-# Copy the application source code into the container
+# Copy the rest of your application files
 COPY . .
+RUN npm run build --prod
 
-# Build the Angular application
-RUN npm run build
-
-# Expose the port your Angular app runs on (usually 80)
+# Stage 2
+FROM nginx:alpine
+COPY --from=node /app/dist/ /usr/share/nginx/html
 EXPOSE 80
-
-# Command to serve your Angular app
-CMD ["npm", "run", "start"]
